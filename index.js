@@ -6,6 +6,7 @@ const href = require('sheet-router/href')
 const hash = require('sheet-router/hash')
 const hashMatch = require('hash-match')
 const barracks = require('barracks')
+const nanoraf = require('nanoraf')
 const assert = require('assert')
 const xtend = require('xtend')
 const yo = require('yo-yo')
@@ -22,6 +23,7 @@ function choo (opts) {
   var _defaultRoute = null
   var _rootNode = null
   var _routes = null
+  var _frame = null
 
   start.toString = toString
   start.router = router
@@ -83,8 +85,13 @@ function choo (opts) {
   function render (data, state, prev, name, createSend) {
     if (opts.onState) opts.onState(data, state, prev, name, createSend)
 
-    const newTree = _router(state.location.pathname, state, prev)
-    _rootNode = yo.update(_rootNode, newTree)
+    if (!_frame) {
+      _frame = nanoraf(function (state) {
+        const newTree = _router(state.location.pathname, state, prev)
+        _rootNode = yo.update(_rootNode, newTree)
+      })
+    }
+    _frame(state)
   }
 
   // register all routes on the router
